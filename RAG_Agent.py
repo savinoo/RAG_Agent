@@ -1,12 +1,13 @@
+import os
+import sys
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-import os
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
-from langgraph.graph import StateGraph, START, END, MessagesState
+from langgraph.graph import StateGraph, START, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -29,19 +30,55 @@ if os.path.exists(persist_directory) and os.path.isdir(persist_directory):
 else:
     print("Vector Store not found. Creating...")
     if not os.path.exists(pdf_file):
-        raise FileNotFoundError(f"PDF file not found: {pdf_file}")
-        
+        print(f"\n❌ ERROR: PDF file not found: {pdf_file}")
+        sys.exit(1)
+    print(f"Loading PDF: {pdf_file}")
     loader = PyPDFLoader(pdf_file)
     docs = loader.load()
+    print(f"Loaded {len(docs)} pages from PDF")
+
+    if not docs:
+        print("\n❌ ERROR: PDF loaded but no pages were found.")
+        sys.exit(1)
+
+    total_chars = sum(len(doc.page_content) for doc in docs)
+    print(f"Total characters extracted: {total_chars}")
+
+    if total_chars == 0:
+        print("\n❌ ERROR: This PDF appears to contain scanned images without text.")
+        print("💡 To process this PDF, you would need OCR (Optical Character Recognition).")
+        print("🔧 Consider using tools like Tesseract OCR or Adobe Acrobat to convert it to searchable text first.")
+        sys.exit(1)
+
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = text_splitter.split_documents(docs)
-    
-    vectorstore = Chroma.from_documents(
-        documents=splits,
-        embedding=embeddings,
-        persist_directory=persist_directory,
-        collection_name=name_file_without_ext
-    )
+
+    print(f"Split into {len(splits)} chunks")
+
+    if not splits:
+        print("\n❌ ERROR: Text splitting resulted in no chunks.")
+        sys.exit(1)
+
+    # Filtrar chunks vazios
+    splits = [s for s in splits if s.page_content.strip()]
+
+    if not splits:
+        print("\n❌ ERROR: All text chunks are empty after filtering.")
+        sys.exit(1)
+
+    print(f"Creating vector store with {len(splits)} non-empty chunks...")
+
+    try:
+        vectorstore = Chroma.from_documents(
+            documents=splits,
+            embedding=embeddings,
+            persist_directory=persist_directory,
+            collection_name=name_file_without_ext
+        )
+        print("✅ Vector store created successfully!")
+    except Exception as e:
+        print(f"\n❌ ERROR: Failed to create vector store: {str(e)}")
+        sys.exit(1)
 
 retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 
@@ -66,7 +103,7 @@ If you need to look up information before asking a follow-up question, you are a
 Please always cite the specific part of the documents you use in your answers.
 """)
         messages = [sys_msg] + messages
-    
+
     response = llm_with_tools.invoke(messages)
     return {"messages": [response]}
 
@@ -89,16 +126,16 @@ def running_agent():
     thread_id = "user_session_1"
     config = {"configurable": {"thread_id": thread_id}}
 
-    print(f"\n--- Agent Started ---")
-    
+    print("\n--- Agent Started ---")
+
     while True:
         user_input = input("\nYour question: ")
         if user_input.lower() in ['exit', 'quit']:
             break
-        
+
         events = app.stream(
-            {"messages": [HumanMessage(content=user_input)]}, 
-            config, 
+            {"messages": [HumanMessage(content=user_input)]},
+            config,
             stream_mode="values"
         )
 
