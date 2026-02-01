@@ -1,88 +1,66 @@
 # Agentic RAG with LangGraph & ChromaDB 🦜🕸️
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![LangChain](https://img.shields.io/badge/LangChain-v0.3-green)
-![LangGraph](https://img.shields.io/badge/LangGraph-Stateful-orange)
-![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5-black)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![LangChain](https://img.shields.io/badge/LangChain-v0.3-green)](https://github.com/langchain-ai/langchain)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Stateful_Agents-orange)](https://github.com/langchain-ai/langgraph)
+[![VectorDB](https://img.shields.io/badge/ChromaDB-Vector_Store-lightgrey)](https://www.trychroma.com/)
 
-A stateful **Agentic RAG (Retrieval-Augmented Generation)** system capable of reasoning and maintaining conversation history while chatting with PDF documents.
+A sophisticated, stateful **Agentic RAG (Retrieval-Augmented Generation)** system designed for intelligent document interaction. This agent doesn't just retrieve; it reasons about the necessity of retrieval and maintains a coherent conversation state across multiple turns.
 
-Built using **LangGraph** for workflow management, **ChromaDB** for vector storage, and **OpenAI** for embeddings and inference.
+## 🌟 Key Features
 
-## 🚀 Features
-
-- **Agentic Workflow**: Uses `LangGraph` to manage state, allowing the model to decide when to call tools (retriever) or answer directly.
-- **Persistent Memory**: Uses `MemorySaver` to maintain context across multiple interaction turns within a session.
-- **Vector Search**: Ingests PDF documents, chunks them, and stores embeddings in a local `ChromaDB` persistence directory.
-- **Smart Retrieval**: Fetches the most relevant document chunks only when necessary.
+- **🧠 Agentic Reasoning**: Powered by **LangGraph**, the system employs a cyclic graph-based workflow where the LLM autonomously decides whether to query the knowledge base or respond directly.
+- **🔄 Stateful Persistence**: Implements `MemorySaver` to preserve chat history, ensuring contextually aware responses within a single user session.
+- **⚡ High-Performance Retrieval**: Utilizes **ChromaDB** for local vector storage and **OpenAI's** `text-embedding-3-small` for precision-grade semantic search.
+- **📄 Seamless Ingestion**: Automated PDF processing, chunking, and indexing for immediate "chat-with-your-data" capabilities.
 
 ## 🛠️ Tech Stack
 
-- **LangGraph**: Orchestrates the agent's flow (StateGraph, Nodes, Edges).
-- **LangChain**: Handles document loading, text splitting, and tool definitions.
-- **ChromaDB**: Local vector database for efficient semantic search.
-- **OpenAI API**: Uses `gpt-5` (or similar) for reasoning and `text-embedding-3-small` for embeddings.
+- **Orchestration**: [LangGraph](https://github.com/langchain-ai/langgraph) (StateGraph, Nodes, Edges)
+- **Framework**: [LangChain](https://github.com/langchain-ai/langchain)
+- **Vector Database**: [ChromaDB](https://www.trychroma.com/)
+- **LLM**: OpenAI GPT models (Optimized for GPT-4o / GPT-5)
+- **Embeddings**: OpenAI `text-embedding-3-small`
 
-## 📂 Project Structure
+## 📂 Architecture
 
 ```text
 .
-├── chroma_db/                  # Created automatically (Vector Store data)
-├── your_pdf.pdf                # Your PDF file here
-├── RAG_Agents.py               # The main application script
-├── .env                        # API Keys (not committed)
-├── .gitignore                  # Git ignore rules
-└── requirements.txt            # Python dependencies
+├── chroma_db/                  # Local Vector Store persistence
+├── your_document.pdf           # Target knowledge source
+├── RAG_Agent.py                # Core Agentic logic & Graph definition
+├── .env                        # Environment configuration
+└── requirements.txt            # Project dependencies
 ```
 
-## ⚙️ Setup & Installation
+## 🚀 Getting Started
 
-1. **Clone the repository**
-   
-   ```bash
-   git clone [https://github.com/seu-usuario/nome-do-repo.git](https://github.com/seu-usuario/nome-do-repo.git)
-   cd nome-do-repo
-   ```
-2. **Create a Virtual Environment**
-   
-   ```bash
-   python -m venv venv
+### 1. Installation
+```bash
+git clone https://github.com/savinoo/RAG_Agent.git
+cd RAG_Agent
+python -m venv venv
+source venv/bin/activate # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-   # Windows:
-   venv\Scripts\activate
-  
-   # Mac/Linux:
-   source venv/bin/activate
-   ```
+### 2. Configuration
+Create a `.env` file:
+```env
+OPENAI_API_KEY=your_key_here
+```
 
-3. **Install Dependencies**
+### 3. Execution
+Place your PDF in the root directory and run:
+```bash
+python RAG_Agent.py
+```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🤖 How it Works
+1. **Ingestion**: The script checks for an existing ChromaDB instance. If absent, it parses the PDF into semantic chunks and generates embeddings.
+2. **Decision Loop**: When a query is received, the agent enters a LangGraph node.
+3. **Tool Call**: If the agent determines retrieval is needed, it calls the ChromaDB tool.
+4. **Final Response**: The agent synthesizes the retrieved context and conversation history into a final answer.
 
-4. **Configure Environment Variables**
-
-   ```Ini, TOML
-   OPENAI_API_KEY=sk-your-openai-key-here
-   ```
-5. **Add your Document** Place your PDF file in the root directory. 
-
-
-## ▶️ Usage
-Run the agent via the terminal:
-
-   ```bash
-   python RAG_Agent.py
-   ```
-   
-The system will:
-1. Check if the Vector Store exists. If not, it will process the PDF.
-2. Start an interactive session.
-3. You can ask questions about the document, and the agent will use the retrieval tool to answer.
-
-Type `exit` or `quit` to stop the application.
-
-## 🤝 Contributing
-
-Feel free to submit issues or pull requests to improve the agent's logic or retrieval accuracy.
+---
+Developed by [Lucas Lorenzo Savino](https://github.com/savinoo)
