@@ -17,3 +17,7 @@ chroma_db/
 # Logs e ficheiros de sistema
 *.log
 .DS_Store
+
+# Configurações do IDE
+.vscode/
+.idea/
